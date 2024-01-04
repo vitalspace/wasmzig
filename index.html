@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JS, WASM, ZIG Calculator</title>
+    <style>
+      * {
+        margin: 0%;
+        padding: 0%;
+
+        .container {
+          height: 100vh;
+          width: 100vw;
+
+          display: grid;
+          place-items: center;
+          background: rgb(168, 168, 168);
+
+          .calculator {
+            background: white;
+            width: 20em;
+            padding: 1em;
+            border-radius: 0.3em;
+
+            .result_container {
+              height: 5em;
+              background: black;
+              display: grid;
+              place-items: center;
+              margin-top: 0.8em;
+
+              .result {
+                width: 100%;
+                background: transparent;
+                font-size: 40px;
+                border: none;
+                padding-left: 0.5em;
+                color: white;
+              }
+            }
+
+            .operations {
+              display: grid;
+              gap: 1em;
+              margin: 10px 0;
+
+              > select {
+                padding: 10px 0;
+                border: none;
+                box-shadow: 0 0px 5px gray;
+                padding-left: 0.7em;
+                background: white;
+                outline: none;
+              }
+
+              > input {
+                padding: 10px 0;
+                border: none;
+                box-shadow: 0 0px 5px gray;
+                padding-left: 1em;
+                outline: none;
+              }
+
+              > button {
+                padding: 10px 0;
+                border: 1px solid transparent;
+                box-shadow: 0px 0px 5px gray;
+                color: white;
+                background: rgb(116, 212, 116);
+                cursor: pointer;
+                transition: all 0.2s;
+                font-size: 14px;
+
+                &:hover {
+                  background: rgb(46, 201, 46);
+                }
+              }
+            }
+          }
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="calculator">
+        <div class="result_container">
+          <input
+            id="result"
+            class="result"
+            type="text"
+            disabled
+            placeholder="0"
+          />
+        </div>
+
+        <div class="operations">
+          <select id="operation">
+            <option value="add">Add</option>
+            <option value="sub">Subtract</option>
+            <option value="mult">Multiply</option>
+            <option value="div">Divide</option>
+          </select>
+          <input id="numa" type="number" placeholder="0" />
+          <input id="numb" type="number" placeholder="0" />
+          <button id="resultBtn">Result</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let selectedOption = "add";
+      document
+        .querySelector("#operation")
+        .addEventListener("change", function () {
+          selectedOption = this.options[this.selectedIndex].value;
+        });
+
+      WebAssembly.instantiateStreaming(fetch("./main.wasm")).then((result) => {
+        let operations = {
+          add: result.instance.exports.add,
+          sub: result.instance.exports.sub,
+          mult: result.instance.exports.mult,
+          div: result.instance.exports.div,
+        };
+
+        document.querySelector("#resultBtn").addEventListener("click", (e) => {
+          e.preventDefault();
+          const numa = document.querySelector("#numa").value;
+          const numb = document.querySelector("#numb").value;
+
+          if (numa > 0 && numb > 0) {
+            document.querySelector("#result").textContent = ``;
+            const operationFunction = operations[selectedOption];
+            if (operationFunction) {
+              const resultValue = operationFunction(numa, numb);
+              document.querySelector("#result").value = resultValue;
+            }
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
